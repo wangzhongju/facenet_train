@@ -1,0 +1,40 @@
+## Face alignment
+
+python .\src\align\align_dataset_mtcnn.py .\data\images\ .\data\res --image_size 182 --margin 44 --gpu_memory_fraction 0.25
+
+
+for N in {1..4}; do 
+python .\src\align\align_dataset_mtcnn.py 
+.\data\images\ 
+.\data\res 
+--image_size 182 
+--margin 44 --random_order 
+--gpu_memory_fraction 0.25 
+& done
+
+
+
+
+tensorboard --logdir=.\logs\facenet --port 6006
+## Start classifier training
+
+python .\src\train_softmax.py --logs_base_dir .\logs\facenet\ --models_base_dir .\models\facenet --data_dir .\datasets\lfw\lfw_mtcnnalign_160\ --image_size 160 --model_def models.inception_resnet_v1 --lfw_dir .\datasets\lfw\lfw_mtcnnalign_160\ --optimizer ADAM --learning_rate -1 --max_nrof_epochs 150 --keep_probability 0.8 --random_crop --random_flip --use_fixed_image_standardization --learning_rate_schedule_file .\data\learning_rate_schedule_classifier_casia.txt --weight_decay 5e-4 --embedding_size 512 --lfw_distance_metric 1 --lfw_use_flipped_images --lfw_subtract_mean --validation_set_split_ratio 0.05 --validate_every_n_epochs 5 --prelogits_norm_loss_factor 5e-4
+
+
+python .\src\train_softmax.py --logs_base_dir .\logs\facenet\ --models_base_dir .\models\facenet --data_dir .\datasets\VGGFace\train_align\ --image_size 160 --model_def models.inception_resnet_v1 --lfw_dir .\datasets\lfw\lfw_mtcnnalign_160\ --optimizer ADAM --learning_rate -1 --max_nrof_epochs 150 --keep_probability 0.8 --random_crop --random_flip --use_fixed_image_standardization --learning_rate_schedule_file .\data\learning_rate_schedule_classifier_casia.txt --weight_decay 5e-4 --embedding_size 512 --lfw_distance_metric 1 --lfw_use_flipped_images --lfw_subtract_mean --validation_set_split_ratio 0.05 --validate_every_n_epochs 5 --prelogits_norm_loss_factor 5e-4
+
+
+## train svm
+
+python .\src\classifier.py TRAIN .\datasets\test_svm .\models\facenet\20180402-114759 .\models\classifier.pkl
+
+
+python .\src\classifier.py CLASSIFY .\datasets\test_svm .\models\facenet\20180402-114759 .\models\classifier.pkl
+
+
+
+## online face recognition
+
+edit lines 45 and 46 of the .\contributed\face.py file
+
+python .\contributed\real_time_face_recognition.py --debug
